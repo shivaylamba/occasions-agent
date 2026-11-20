@@ -108,5 +108,72 @@ def receipt(occasion_id: str, ctx: Context) -> dict:
     return {"title": o["title"], "status": o["status"], "steps": o["steps"]}
 
 
+# ---------- Group grocery run (PRD tools). Identity comes from the token; the model never supplies it. ----------
+from . import grocery  # noqa: E402
+
+
+@mcp.tool()
+def get_group_context(ctx: Context) -> dict:
+    """The group's members, delivery ZIP, payment mode and the preferences you are allowed to see."""
+    m = _member(ctx)
+    s = grocery.snapshot(m)
+    return {"group": s["group"], "run": {k: s["run"][k] for k in ("id", "state", "version", "payment_mode", "deadline")},
+            "preferences": [{k: p[k] for k in ("member", "subject", "value", "hard", "visibility")} for p in s["preferences"]]}
+
+
+@mcp.tool()
+def add_request(text: str, ctx: Context) -> dict:
+    """Add a grocery need in plain words, e.g. 'we need fragrance-free detergent' or '1 gallon of milk for me'."""
+    r = grocery.add_request(_member(ctx), text)
+    return {k: r.get(k) for k in ("id", "item", "quantity", "unit", "allocation", "constraints", "status")}
+
+
+@mcp.tool()
+def update_request(request_id: str, ctx: Context, status: str = "", quantity: float = 0) -> dict:
+    """Change or cancel (status='cancelled') one of your own requests."""
+    ch = {}
+    if status:
+        ch["status"] = status
+    if quantity:
+        ch["quantity"] = quantity
+    r = grocery.update_request(_member(ctx), request_id, ch)
+    return {k: r.get(k) for k in ("id", "item", "quantity", "status", "version")}
+
+
+@mcp.tool()
+def set_preference(subject: str, value: str, ctx: Context, hard: bool = True, share_with_group: bool = True) -> dict:
+    """Remember a grocery preference (e.g. detergent -> fragrance-free). Reasons are never shared."""
+    p = grocery.set_preference(_member(ctx), subject, value, hard, "group" if share_with_group else "private")
+    return {k: p[k] for k in ("id", "subject", "value", "hard", "visibility")}
+
+
+@mcp.tool()
+def get_run_snapshot(ctx: Context) -> dict:
+    """Current requests, plan summary, approvals and order state for this run."""
+    s = grocery.snapshot(_member(ctx))
+    p = s["plan"]
+    return {"run": s["run"], "requests": [{k: r.get(k) for k in ("id", "author", "item", "quantity", "unit", "allocation", "status")}
+                                          for r in s["requests"]],
+            "plan": p and {"id": p["id"], "recommended": p["recommended"], "why": p["why"],
+                           "allocations": p["allocations"], "questions": p["questions"]},
+            "approvals": s["approvals"], "execution": s["execution"] and {"state": s["execution"]["state"],
+                                                                          "order": s["execution"].get("order")}}
+
+
+@mcp.tool()
+def save_plan(ctx: Context) -> dict:
+    """Have the agent compare baskets across the sources checked and save a new plan version.
+    Approving and paying are human-only actions in the app; this tool cannot approve."""
+    p = grocery.plan(_member(ctx))
+    return {"id": p["id"], "recommended": p["recommended"], "why": p["why"], "allocations": p["allocations"]}
+
+
+@mcp.tool()
+def append_audit_event(decision: str, ctx: Context) -> dict:
+    """Record a note in the run's audit trail, attributed to your agent."""
+    m = _member(ctx)
+    return grocery.audit(grocery.get_run()["id"], f"{grocery.member_name(m)}'s agent", decision[:300], action="note")
+
+
 if __name__ == "__main__":
     mcp.run("stdio" if "stdio" in sys.argv else "streamable-http")

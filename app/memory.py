@@ -22,17 +22,66 @@ def can_read(member, dataset):
     return dataset in readable(member)
 
 
+def cognee_live():
+    return bool(env("COGNEE_API_KEY") and env("COGNEE_BASE_URL"))
+
+
+def cognee_dataset(dataset):
+    return f"occasions_{dataset}"
+
+
 def _cognee_add(dataset, text):
-    key, base = env("COGNEE_API_KEY"), env("COGNEE_BASE_URL")
-    if not (key and base):
-        return
-    try:  # Cognee Cloud REST: add text to a dataset, then cognify. Best effort; local store is authoritative.
-        h = {"Authorization": f"Bearer {key}", "X-Api-Key": key}
-        httpx.post(f"{base.rstrip('/')}/api/v1/add", headers=h, timeout=10,
-                   json={"datasetName": dataset, "data": [text]})
-        httpx.post(f"{base.rstrip('/')}/api/v1/cognify", headers=h, timeout=10, json={"datasets": [dataset]})
-    except Exception:
-        pass
+    """Cognee Cloud /api/v1/remember: add text to a dataset and build the graph in the background."""
+    if not cognee_live():
+        return {"ok": False}
+    try:
+        r = httpx.post(f"{env('COGNEE_BASE_URL').rstrip('/')}/api/v1/remember", timeout=30,
+                       headers={"X-Api-Key": env("COGNEE_API_KEY")},
+                       data={"raw_data": [text], "datasetName": cognee_dataset(dataset), "run_in_background": "true"})
+        return {"ok": r.status_code < 300, "status": r.status_code, "detail": r.text[:200]}
+    except Exception as e:
+        return {"ok": False, "detail": type(e).__name__}
+
+
+def cognee_recall(member, question):
+    """Ask Cognee, scoped to the datasets this member may read. Returns (text, datasets) or (None, reason)."""
+    if not cognee_live():
+        return None, "cognee not configured"
+    dsets = [cognee_dataset(d) for d in readable(member)]
+    try:
+        for attempt in (dsets, [cognee_dataset("household")]):
+            r = httpx.post(f"{env('COGNEE_BASE_URL').rstrip('/')}/api/v1/recall", timeout=60,
+                           headers={"X-Api-Key": env("COGNEE_API_KEY")},
+                           json={"query": question, "datasets": attempt, "topK": 10})
+            if r.status_code == 404 and attempt is dsets:
+                continue  # a member's private dataset may not exist yet
+            break
+        if r.status_code >= 300:
+            return None, f"cognee recall {r.status_code}"
+        j = r.json()
+        items = j if isinstance(j, list) else [j]
+        parts = []
+        for x in items:
+            if isinstance(x, dict):
+                v = x.get("text") or (x.get("raw") or {}).get("value") or x.get("search_result") or x.get("answer")
+                parts.append(v if isinstance(v, str) else str(v))
+            else:
+                parts.append(str(x))
+        return " ".join(p for p in parts if p)[:900], attempt
+    except Exception as e:
+        return None, type(e).__name__
+
+
+def seed_cognee():
+    """Push every seeded fact into its Cognee dataset once."""
+    if not cognee_live() or db.get("claims", "cognee_seeded"):
+        return 0
+    n = 0
+    for f in db.list("memory"):
+        if _cognee_add(f["dataset"], f"{f['about']}: {f['fact']} (source: {f['source']})").get("ok"):
+            n += 1
+    db.put("claims", "cognee_seeded", {"facts": n, "at": time.strftime("%H:%M")}, grp="system")
+    return n
 
 
 def remember(member, about, fact, scope="private", source="told by member"):

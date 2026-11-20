@@ -51,7 +51,10 @@ def verify(headers, body: dict):
     return hmac.compare_digest(want, headers.get("Poppy-Signature", ""))
 
 
-def _pay(amount, description):
+def _pay(amount, description, metadata=None):
+    from . import firedrill
+    if firedrill.live("stripe"):
+        return firedrill.charge(amount, description, metadata or {})
     key = env("STRIPE_SECRET_KEY")
     if key and key.startswith("sk_test_"):
         try:
@@ -74,7 +77,8 @@ def place_order(headers, body):
     item = next((c for c in CATALOG if c["id"] == body["listing_id"]), None)
     if not item:
         return {"ok": False, "error": "unknown item"}
-    pay = _pay(item["price"], f"{item['title']} for {body.get('occasion', '')}")
+    pay = _pay(item["price"], f"{item['title']} for {body.get('occasion', '')}",
+               {"listing": item["id"], "occasion": body.get("occasion", "")[:40], "agent": "occasions"})
     return {"ok": True, "order_id": f"DM-{uuid.uuid4().hex[:6].upper()}", "item": item["title"],
             "price": item["price"], "payment": pay, "speaker": headers.get("Poppy-Speaker"),
             "at": time.strftime("%Y-%m-%d %H:%M")}

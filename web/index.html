@@ -65,7 +65,7 @@ async function load() {
   S = await api("/api/state");
   $("#today").textContent = "Today " + S.today;
   $("#who").innerHTML = Object.entries(S.members).map(([k, m]) => `<option value="${k}" ${k===member?"selected":""}>${m.name}</option>`).join("");
-  $("#ints").innerHTML = Object.entries(S.integrations).map(([k, v]) => `<span class="chip ${v?"live":""}">${v?"●":"○"} ${esc(k)}</span>`).join("");
+  $("#ints").innerHTML = Object.entries(S.integrations).map(([k, v]) => `<span class="chip ${v==="live"?"live":""}" title="${esc(v)}">${v==="live"?"●":"○"} ${esc(k)} <b>${esc(v)}</b></span>`).join("");
   route();
 }
 

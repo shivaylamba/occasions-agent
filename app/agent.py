@@ -6,9 +6,10 @@ what the agent knew, what it checked, and what it did.
 import re
 import time
 import uuid
-from datetime import date
+from datetime import date, timedelta
 
-from . import memory, models, persona, senso, store, telemetry
+from . import firedrill, memory, models, persona, senso, store, telemetry
+from .config import PUBLIC_BASE_URL as PUBLIC_RECEIPT_URL
 from .config import TODAY
 from .db import db
 from .seed import CALENDAR, MEMBERS
@@ -36,13 +37,39 @@ def list_occasions():
     return sorted(db.list("occasions"), key=lambda o: o["date"])
 
 
+def calendar_events():
+    """Read occasions from the Firedrill Google Calendar (falls back to the seed calendar)."""
+    if not firedrill.live("calendar"):
+        return CALENDAR, "seed calendar (demo fixture)"
+    firedrill.ensure_events(CALENDAR)
+    items = firedrill.list_events(f"{TODAY.isoformat()}T00:00:00Z", f"{(TODAY + timedelta(days=45)).isoformat()}T00:00:00Z")
+    by_id = {e["id"]: e for e in CALENDAR}
+    out = []
+    for it in items:
+        desc, title = it.get("description") or "", it.get("summary") or ""
+        start = (it.get("start") or {}).get("date") or ((it.get("start") or {}).get("dateTime") or "")[:10]
+        if firedrill.TAG in desc:
+            sid = desc.split(firedrill.TAG)[-1].split()[0]
+            if sid in by_id:
+                out.append({**by_id[sid], "date": start or by_id[sid]["date"], "calendar_event_id": it.get("id")})
+                continue
+        m = re.match(r"(.+?)'s birthday", title, re.I)
+        if m:  # any birthday someone adds to the calendar becomes a gift occasion
+            out.append({"id": f"cal-{it.get('id')}", "title": title, "date": start, "kind": "birthday",
+                        "person": m.group(1).strip(), "owner": "shivay", "calendar_event_id": it.get("id"),
+                        "slots": [{"slot": "gift", "category": "gift", "query": f"gift for {m.group(1)}"}]})
+    return out, f"Firedrill Google Calendar (events.list, {len(items)} events read)"
+
+
 def scan_calendar():
-    """Firedrill Calendar stand-in. Creates occasions for events and runs the agent for those now due."""
+    """Creates occasions for calendar events and runs the agent for those now due."""
     ran = []
-    for ev in CALENDAR:
+    events, source = calendar_events()
+    for ev in events:
         occ = get_occasion(ev["id"])
         if not occ:
-            occ = {**ev, "status": "too_early", "steps": [], "results": {}, "created_by": "calendar"}
+            occ = {**ev, "status": "too_early", "steps": [], "results": {}, "created_by": "calendar",
+                   "calendar_source": source}
             save(occ)
         st = telemetry.settings(occ["owner"])
         due = days_until(occ["date"]) <= st.get("act_days_before", MEMBERS[occ["owner"]]["act_days_before"])
@@ -88,7 +115,7 @@ def run(oid, member, trigger="manual"):
         {"t": _now(), "kind": kind, "text": text, "source": source, "sponsor": sponsor})
 
     add("trigger", f"Started by {trigger}: {occ['title']} on {occ['date']} ({days_until(occ['date'])} days away)",
-        "calendar" if "calendar" in trigger else trigger, "Firedrill")
+        occ.get("calendar_source", trigger), "Firedrill")
 
     # Someone else already handling it?
     claim = db.get("claims", f"claim:{oid}")
@@ -116,8 +143,17 @@ def run(oid, member, trigger="manual"):
         facts += memory.recall(member, p, purpose=f"plan {occ['title']}")
     facts += memory.recall(member, "Family", purpose=f"plan {occ['title']}")
     occ["knew"] = [{"about": f["about"], "fact": f["fact"], "source": f["source"], "dataset": f["dataset"]} for f in facts]
-    add("memory", f"Recalled {len(facts)} facts about {', '.join(x for x in people if x)} "
-                  f"(datasets: {', '.join(sorted({f['dataset'] for f in facts}))})", "Cognee", "Cognee")
+    add("memory", f"Recalled {len(facts)} structured facts about {', '.join(x for x in people if x)} "
+                  f"(datasets: {', '.join(sorted({f['dataset'] for f in facts}))})", "family memory", "Cognee")
+    who = ", ".join(x for x in people if x) or "the family"
+    ctext, cinfo = memory.cognee_recall(member, f"What should we know about {who} when shopping for {occ['title']}? "
+                                                 f"Likes, allergies, things they already own.")
+    if ctext:
+        occ["knew"].append({"about": who, "fact": f"Cognee: {ctext[:400]}", "source": "Cognee recall",
+                            "dataset": f"{member}_private"})
+        add("memory", f"Cognee recall over {', '.join(cinfo)}: \"{ctext[:220]}\"", "Cognee /api/v1/recall", "Cognee")
+    else:
+        add("memory", f"Cognee recall unavailable ({cinfo}); used structured memory only", "Cognee", "Cognee")
     cons = constraints(facts)
     past = [o for o in db.list("orders") if o.get("for") == occ.get("person")]
 
@@ -196,20 +232,36 @@ def run(oid, member, trigger="manual"):
             occ["results"][slot["slot"]] = res
             continue
 
-        pick, reason, usage = models.choose([f["fact"] for f in facts], safe, occ)
+        rel = models.sie_scores(" ".join(f["fact"] for f in facts if f["about"] != "Family")[:600] or occ["title"],
+                                [f"{L['title']} ({', '.join(L['tags'])})" for L in safe])
+        relevance = {L["id"]: s for L, s in zip(safe, rel)} if rel else None
+        if relevance:
+            add("rank", "Relevance to what we know: " + ", ".join(f"{L['title']} {relevance[L['id']]:.2f}" for L in safe),
+                f"SIE {models.SIE_MODEL} embeddings", "Superlinked SIE")
+        pick, reason, usage = models.choose([f["fact"] for f in facts], safe, occ, relevance)
         chosen = next(L for L in safe if L["id"] == pick)
         res.update(chosen={"id": chosen["id"], "title": chosen["title"], "price": chosen["price"]},
                    reason=reason, model=usage)
-        add("decide", f"Chose {chosen['title']} (${chosen['price']:.2f}): {reason}", usage["model"], "Arcee")
+        add("decide", f"Chose {chosen['title']} (${chosen['price']:.2f}): {reason}",
+            f"{usage['model']}" + (f", {usage.get('tokens')} tokens" if usage.get("tokens") else ""),
+            "Nebius Token Factory" if usage["model"] != "local-ranker" else "")
 
-        if not settings.get("auto_buy", True):
+        auto_limit = float(settings.get("auto_buy_under", MEMBERS[member]["mandate"][slot["category"]]))
+        if not settings.get("auto_buy", True) or chosen["price"] > auto_limit:
             occ["status"] = "needs_you"; all_bought = False
+            why = "auto-buy is off" if not settings.get("auto_buy", True) else f"above the ${auto_limit:.0f} auto-buy limit"
             occ["needs"] = {"type": "approve", "listing_id": chosen["id"], "slot": slot["slot"],
-                            "text": f"Auto-buy is off (Statsig). Approve {chosen['title']} ${chosen['price']:.2f}?"}
+                            "text": f"Approve {chosen['title']} for ${chosen['price']:.2f}? ({why}, from Statsig agent_settings)"}
+            add("escalate", occ["needs"]["text"], f"Statsig ({settings.get('_source')})", "Statsig")
             occ["results"][slot["slot"]] = res
             continue
         res["order"] = buy(occ, member, chosen["id"], add)
         occ["results"][slot["slot"]] = res
+        if not res["order"].get("ok"):
+            all_bought = False
+            occ["status"] = "needs_you"
+            occ["needs"] = {"type": "failed", "text": f"Checkout failed for {chosen['title']}; nothing was charged twice. Retry?"}
+            db.delete("claims", f"claim:{occ['id']}")  # release the claim so someone else can buy
 
     if all_bought:
         occ["status"] = "bought"
@@ -236,12 +288,36 @@ def buy(occ, member, listing_id, add=None):
     order.update({"for": occ.get("person"), "member": member, "occasion": occ["id"],
                   "signed": {k: (v[:12] + "…" if k == "Poppy-Signature" else v) for k, v in headers.items()},
                   "scopes": [s["name"] for s in disc["scopes"]]})
+    pay = order["payment"]
+    if not pay.get("ok", True) and pay.get("provider") == "firedrill-stripe":
+        order["ok"] = False
+        if add:
+            add("buy", f"Payment failed on {pay.get('tool')}: {pay.get('status')}", "Firedrill Stripe", "Firedrill")
+        return order
     db.put("orders", order["order_id"], order, grp=member, seq=int(time.time()))
     telemetry.track("purchase_made", member, {"occasion": occ["id"], "price": order["price"]})
     if add:
-        add("buy", f"Bought {order['item']} for ${order['price']:.2f}, order {order['order_id']}, "
-                   f"payment {order['payment']['provider']}. Signed Poppy request, speaker=ai.",
-            store.STORE_NAME, "Poppy + Stripe")
+        add("buy", f"Bought {order['item']} for ${order['price']:.2f}, order {order['order_id']}. "
+                   f"Signed Poppy request (speaker=ai) to {store.STORE_NAME}.", store.STORE_NAME, "Poppy")
+        add("pay", f"Payment {pay.get('id')} {pay.get('status')} via {pay.get('tool', pay.get('provider'))}",
+            pay.get("provider"), "Firedrill Stripe" if pay.get("provider") == "firedrill-stripe" else "")
+    # Tell the human and the family: Gmail receipt + Slack family channel.
+    name = MEMBERS[member]["name"]
+    if firedrill.live("gmail"):
+        g = firedrill.send_receipt(f"Receipt: {order['item']} for {occ['title']}",
+                                   f"Your agent bought {order['item']} (${order['price']:.2f}) for {occ['title']} on {occ['date']}.\n"
+                                   f"Order {order['order_id']}, payment {pay.get('id')}.\n"
+                                   f"Why: {PUBLIC_RECEIPT_URL}/#/receipt/{occ['id']}")
+        order["gmail"] = {k: g.get(k) for k in ("ok", "id", "to")}
+        if add:
+            add("notify", f"Receipt email {'sent' if g['ok'] else 'FAILED'} to {g.get('to')} ({g['tool']})", "Firedrill Gmail", "Firedrill")
+    if firedrill.live("slack"):
+        s = firedrill.post(f":gift: {name}'s agent bought *{order['item']}* (${order['price']:.2f}) for {occ['title']} "
+                           f"({occ['date']}). It's claimed, so nobody else needs to buy one.")
+        order["slack"] = {k: s.get(k) for k in ("ok", "channel", "ts")}
+        if add:
+            add("notify", f"Family channel update {'posted' if s['ok'] else 'FAILED'} ({s['tool']})", "Firedrill Slack", "Firedrill")
+    db.put("orders", order["order_id"], order, grp=member, seq=int(time.time()))
     return order
 
 

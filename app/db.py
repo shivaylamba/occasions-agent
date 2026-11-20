@@ -9,23 +9,29 @@ from urllib.parse import urlparse, unquote
 
 from .config import DB_PATH, env
 
-TABLES = ["occasions", "orders", "trail", "memory", "claims", "chat"]
+TABLES = ["occasions", "orders", "trail", "memory", "claims", "chat",
+          "runs", "requests", "prefs", "plans", "approvals", "actions", "audit"]
 _lock = threading.Lock()
 
 
 class DB:
     def __init__(self):
         url = env("SINGLESTORE_URL")
-        self.kind = "singlestore" if url else "sqlite"
+        self.kind, self.blocker = "sqlite", ""
         if url:
-            import pymysql
-            u = urlparse(url)
-            self.conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
-                                        password=unquote(u.password or ""), database=u.path.lstrip("/"),
-                                        ssl={"ssl": {}} if "singlestore.com" in (u.hostname or "") else None,
-                                        autocommit=True)
-            self.ph = "%s"
-        else:
+            try:
+                import pymysql
+                u = urlparse(url)
+                self.conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
+                                            password=unquote(u.password or ""), database=u.path.lstrip("/"),
+                                            ssl={"ssl": {}} if "singlestore.com" in (u.hostname or "") else None,
+                                            autocommit=True, connect_timeout=8)
+                self.kind, self.ph = "singlestore", "%s"
+            except Exception as e:  # keep the adapter isolated; never print the URL
+                code = getattr(e, "args", [""])[0]
+                self.blocker = f"SingleStore login failed ({type(e).__name__} {code}); using local SQLite demo fixture"
+                print(self.blocker)
+        if self.kind == "sqlite":
             DB_PATH.parent.mkdir(parents=True, exist_ok=True)
             self.conn = sqlite3.connect(DB_PATH, check_same_thread=False)
             self.ph = "?"
@@ -61,9 +67,11 @@ class DB:
     def delete(self, table, id):
         self._exec(f"DELETE FROM {table} WHERE id={self.ph}", (id,))
 
-    def clear(self):
+    def clear(self, keep_groups=("system", "senso_cache")):
+        """Reset demo state, but keep one-time setup markers (Senso KB loaded, Cognee seeded) and cached checks."""
         for t in TABLES:
-            self._exec(f"DELETE FROM {t}")
+            keep = ",".join(f"'{g}'" for g in keep_groups)
+            self._exec(f"DELETE FROM {t} WHERE grp NOT IN ({keep})")
 
 
 db = DB()

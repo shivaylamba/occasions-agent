@@ -3,6 +3,7 @@ import os
 import tempfile
 
 os.environ["DB_PATH"] = os.path.join(tempfile.mkdtemp(), "t.db")
+os.environ["OCCASIONS_NO_DOTENV"] = "1"  # tests run offline against the fixtures
 for k in ("SINGLESTORE_URL", "LLM_API_KEY", "ARCEE_API_KEY", "SENSO_API_KEY", "PERSONA_API_KEY",
           "STATSIG_SERVER_SECRET", "AMPLITUDE_API_KEY", "STRIPE_SECRET_KEY", "COGNEE_API_KEY"):
     os.environ.pop(k, None)

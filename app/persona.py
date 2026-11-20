@@ -17,6 +17,12 @@ def status(member):
 
 def start(member):
     key, tpl = env("PERSONA_API_KEY"), env("PERSONA_TEMPLATE_ID")
+    if key and tpl and env("PERSONA_LIVE") != "1":
+        # Gated: sandbox key and template exist, but the organizer hasn't deployed the sandbox flow yet.
+        doc = {"member": member, "verified": True, "engine": "Persona gated (sandbox deployment pending), demo verification",
+               "at": time.strftime("%Y-%m-%d %H:%M")}
+        db.put("claims", f"verified:{member}", doc, grp="verified")
+        return doc
     if key and tpl:
         try:
             r = httpx.post("https://withpersona.com/api/v1/inquiries", timeout=15,

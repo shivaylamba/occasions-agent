@@ -29,6 +29,15 @@ def _member(m):
 async def startup():
     if not db.list("memory"):
         agent.reset()
+
+    def setup_sponsors():  # one-time: load verified facts into Senso, family facts into Cognee
+        from . import senso
+        try:
+            print("senso kb docs created:", senso.sync_kb())
+            print("cognee facts seeded:", memory.seed_cognee())
+        except Exception as e:
+            print("sponsor setup failed:", type(e).__name__)
+    asyncio.get_event_loop().run_in_executor(None, setup_sponsors)
     if SCAN_EVERY > 0:
         async def loop():
             while True:
@@ -109,6 +118,86 @@ def events():
 @app.post("/api/reset")
 def reset():
     agent.reset()
+    return {"ok": True}
+
+
+# ---- Group grocery run (PRD) ----
+from . import grocery  # noqa: E402
+
+
+def _g(fn, *a, **k):
+    try:
+        return fn(*a, **k)
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/group")
+def group_page():
+    return FileResponse(WEB / "group.html")
+
+
+@app.get("/api/g/snapshot")
+def g_snapshot(member: str = "shivay"):
+    return _g(grocery.snapshot, member)
+
+
+@app.post("/api/g/requests")
+async def g_add(req: Request, member: str = "shivay"):
+    b = await req.json()
+    return _g(grocery.add_request, member, b.get("text", ""), b.get("audience", "group"))
+
+
+@app.patch("/api/g/requests/{rid}")
+async def g_update(rid: str, req: Request, member: str = "shivay"):
+    return _g(grocery.update_request, member, rid, await req.json())
+
+
+@app.post("/api/g/prefs")
+async def g_pref(req: Request, member: str = "shivay"):
+    b = await req.json()
+    return _g(grocery.set_preference, member, b["subject"], b["value"], b.get("hard", True),
+              b.get("visibility", "group"), b.get("private_reason"), b.get("expires"))
+
+
+@app.post("/api/g/mode")
+async def g_mode(req: Request, member: str = "shivay"):
+    b = await req.json()
+    return _g(grocery.set_payment_mode, member, b["mode"], b.get("payer"))
+
+
+@app.post("/api/g/plan")
+def g_plan(member: str = "shivay"):
+    return _g(grocery.plan, member)
+
+
+@app.post("/api/g/approve")
+async def g_approve(req: Request, member: str = "shivay"):
+    b = await req.json()
+    return _g(grocery.approve, member, b["plan_id"], b["limit"])
+
+
+@app.post("/api/g/decline")
+async def g_decline(req: Request, member: str = "shivay"):
+    b = await req.json()
+    return _g(grocery.decline, member, b["plan_id"])
+
+
+@app.post("/api/g/execute")
+def g_execute(member: str = "shivay", test_decline_for: str | None = None):
+    return _g(grocery.execute, member, test_decline_for)
+
+
+@app.post("/api/g/refund")
+def g_refund(member: str = "shivay"):
+    return _g(grocery.refund, member)
+
+
+@app.post("/api/g/reset")
+def g_reset():
+    grocery.reset_run()
     return {"ok": True}
 
 

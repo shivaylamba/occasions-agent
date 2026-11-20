@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def _load_env():
     f = ROOT / ".env"
-    if not f.exists():
+    if not f.exists() or os.environ.get("OCCASIONS_NO_DOTENV") == "1":
         return
     for line in f.read_text().splitlines():
         line = line.strip()
@@ -43,16 +43,18 @@ LLM_MODEL_LARGE = env("LLM_MODEL_LARGE") or env("ARCEE_MODEL_LARGE")
 
 
 def integrations():
-    """Which sponsors are live vs running on the local stand-in (for the UI, no secrets)."""
+    """Integration status for the UI: live | gated | blocked | fixture. No secrets."""
+    from .db import db
+    fd = all(env(f"FIREDRILL_{a}_MCP_URL") for a in ("GOOGLE_CALENDAR", "GMAIL", "SLACK", "STRIPE"))
     return {
-        "senso": bool(env("SENSO_API_KEY")),
-        "firedrill": bool(env("FIREDRILL_API_KEY")),
-        "singlestore": bool(env("SINGLESTORE_URL")),
-        "cognee": bool(env("COGNEE_API_KEY")),
-        "sie": bool(env("SIE_API_KEY")),
-        "llm (arcee/openai-compatible)": bool(LLM_API_KEY and LLM_BASE_URL),
-        "persona": bool(env("PERSONA_API_KEY")),
-        "statsig": bool(env("STATSIG_SERVER_SECRET")),
-        "amplitude": bool(env("AMPLITUDE_API_KEY")),
-        "stripe": bool(env("STRIPE_SECRET_KEY")),
+        "Nebius Token Factory": "live" if env("NEBIUS_API_KEY") else "fixture",
+        "Firedrill (Calendar, Gmail, Slack, Stripe)": "live" if fd else "fixture",
+        "Senso": "live" if env("SENSO_API_KEY") else "fixture",
+        "Cognee": "live" if env("COGNEE_API_KEY") else "fixture",
+        "Superlinked SIE": "live" if env("SIE_API_KEY") else "fixture",
+        "Statsig": "live" if env("STATSIG_SERVER_SECRET") else "fixture",
+        "Amplitude": "live" if env("AMPLITUDE_API_KEY") else "fixture",
+        "SingleStore": "live" if db.kind == "singlestore" else ("blocked" if db.blocker else "fixture"),
+        "Persona": "live" if env("PERSONA_LIVE") == "1" else ("gated" if env("PERSONA_API_KEY") else "fixture"),
+        "Tokens&": "pending" if env("TOKENS_OBSERVE_API_KEY") else "fixture",
     }

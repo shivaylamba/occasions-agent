@@ -40,6 +40,37 @@ agent they already use (Claude, ChatGPT, ...) over MCP.
 
 Each integration runs a local stand-in until its key is in `.env`. The UI shows which ones are live.
 
+## Group grocery run (PRD slice): `/group`
+
+Members add needs whenever they think of them ("we need fragrance-free detergent", "1 gallon of milk for me").
+Nemotron on Nebius Token Factory extracts a structured request (unknowns stay unknown) and the author is kept.
+Shared supplies merge while personal quantities stay allocated to each member. The agent compares complete
+baskets across the sources it checked, computing totals deterministically: unit sizes, packages, coupons, CA tax,
+fees, with unknowns labelled. It proposes per-payer allocations that reconcile to the cent, in either payment mode.
+
+- Each payer approves this exact plan version; any later change voids the approval.
+- Firedrill Stripe authorizes each payer, then captures. A declined card releases the others and pauses the run.
+- Duplicate execution is ignored, and refunds go back to the original payers.
+- Every step is in the audit timeline. Private preference reasons never leave the member.
+
+MCP tools (identity from the bearer token): `get_group_context`, `add_request`, `update_request`, `set_preference`,
+`get_run_snapshot`, `save_plan`, `append_audit_event`. The agent cannot approve or pay.
+
+### Integration status (tested 2026-11-20)
+
+| Service | Status | Used for |
+|---|---|---|
+| Nebius Token Factory (Nemotron) | live | request extraction, gift choice |
+| Firedrill Calendar, Gmail, Slack, Stripe | live (synthetic apps) | trigger, receipts, family channel, authorize/capture/cancel/refund |
+| Senso | live | verified product facts loaded as KB docs; `senso_search` evidence decides seller claims |
+| Cognee | live | per-member + household datasets, permission-scoped recall |
+| Superlinked SIE | live | bge-m3 embeddings rank candidates |
+| Statsig, Amplitude | live | agent settings config; funnel events (no personal data) |
+| SingleStore | blocked | login rejected (1045); local SQLite demo fixture used |
+| Persona | gated | sandbox key works, organizer sandbox deployment pending |
+| Tokens& | blocked | ingest schema only in the private SDK (sign in → Build → Connect app) |
+| Retailers (Safeway, Costco, Ralphs) | fixture | no live retailer API access; orders are labelled synthetic, never "purchased" |
+
 ## Run
 
 ```
