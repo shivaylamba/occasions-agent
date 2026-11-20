@@ -31,6 +31,8 @@ def _member(ctx: Context) -> str:
     try:
         req = ctx.request_context.request
         auth = req.headers.get("authorization", "") if req is not None else ""
+        if not auth and req is not None and req.query_params.get("token"):
+            auth = "Bearer " + req.query_params["token"]  # connector UIs that only accept a URL
     except Exception:
         auth = ""
     if auth.lower().startswith("bearer "):
