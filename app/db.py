@@ -25,7 +25,8 @@ class DB:
                 self.conn = pymysql.connect(host=u.hostname, port=u.port or 3306, user=unquote(u.username or ""),
                                             password=unquote(u.password or ""), database=u.path.lstrip("/"),
                                             ssl={"ssl": {}} if "singlestore.com" in (u.hostname or "") else None,
-                                            autocommit=True, connect_timeout=8)
+                                            autocommit=True, connect_timeout=8, read_timeout=20, write_timeout=20)
+                self.conn.cursor().execute("SELECT 1")
                 self.kind, self.ph = "singlestore", "%s"
             except Exception as e:  # keep the adapter isolated; never print the URL
                 code = getattr(e, "args", [""])[0]
@@ -41,6 +42,8 @@ class DB:
 
     def _exec(self, sql, args=()):
         with _lock:
+            if self.kind == "singlestore":
+                self.conn.ping(reconnect=True)  # dropped connections reconnect instead of hanging
             cur = self.conn.cursor()
             cur.execute(sql, args)
             rows = cur.fetchall() if cur.description else []

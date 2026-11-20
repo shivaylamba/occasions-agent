@@ -15,6 +15,6 @@ pkill -f "python -m app.mcp_server" 2>/dev/null || true
 sleep 1
 nohup .venv/bin/uvicorn app.server:app --host 0.0.0.0 --port 8700 > logs/web.log 2>&1 &
 nohup .venv/bin/python -m app.mcp_server > logs/mcp.log 2>&1 &
-sleep 3
+for i in $(seq 1 30); do curl -sf localhost:8700/api/state >/dev/null && break; sleep 1; done
 curl -sf localhost:8700/api/state >/dev/null && echo "web ok :8700" || { echo "web failed"; tail -20 logs/web.log; }
 (echo > /dev/tcp/127.0.0.1/8701) 2>/dev/null && echo "mcp ok :8701" || { echo "mcp failed"; tail -20 logs/mcp.log; }
