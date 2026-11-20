@@ -575,8 +575,11 @@ def execute(member, decline_card_for=None):
             "payment_method": pm, "description": f"Group grocery {p['id']} share for {member_name(a['member'])}"})
         d = r["data"]
         ok = r["ok"] and d.get("status") == "requires_capture"
+        err = d.get("error") or d.get("status") or "declined"
+        if isinstance(err, dict):
+            err = err.get("message") or err.get("code") or "declined"
         act["payments"].append({"member": a["member"], "amount": a["amount"], "intent": d.get("id"),
-                                "state": "authorized" if ok else "failed", "error": None if ok else (d.get("error") or d.get("status") or "declined")})
+                                "state": "authorized" if ok else "failed", "error": None if ok else str(err)[:160]})
         audit(run["id"], "agent", f"Authorize ${a['amount']} for {member_name(a['member'])}: {'ok' if ok else 'FAILED'}",
               evidence=[f"{r['tool']} {d.get('id', '')}"], action="authorize", outcome="authorized" if ok else "failed")
         if not ok:
