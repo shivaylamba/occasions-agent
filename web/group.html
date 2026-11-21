@@ -2,121 +2,129 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Group grocery run</title>
+<title>Pantry · Group run</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@500;600;700;800&display=swap">
 <style>
-:root{color-scheme:light;--bg:#F4F6EF;--card:#FFFFFF;--ink:#17231B;--mut:#5B6B60;--mut2:#47554B;--line:#E4E8DD;--tint:#E4E8DD;--field:#CBD5C8;--acc:#1B6B3C;--accd:#124C2A;--soft:#E3F0E4;--softink:#1B5E36;--ring:#CFE6D3;--ok:#1B6B3C;--bad:#B3261E;--warn:#8A4B00;--warnbg:#FFE3C2;--focus:#0B57D0;--chip:#E4E8DD}
+:root{color-scheme:light;--bg:#FBF6EE;--card:#FFFFFF;--ink:#2B211B;--mut:#6B5E55;--mut2:#5A4A33;--line:#EFE6DA;--tint:#F7EFE4;--field:#E0D3C5;--acc:#C4471F;--accd:#A63A17;--soft:#E6EED8;--softink:#2F6B2A;--sun:#FCEFC9;--sunk:#F2B441;--peach:#FBE3D6;--ok:#2F6B2A;--bad:#B3261E;--warn:#7A4E00;--warnbg:#FCEFC9;--focus:#2B211B;--sh:0 12px 32px rgba(70,45,20,.07)}
 *{box-sizing:border-box}html{background:var(--bg)}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
-a{color:var(--acc);font-weight:700}a:hover{color:var(--accd)}
-:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Urbanist",system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--ink);font-weight:700}a:hover{color:#6B4A3A}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 select,button,input{font:inherit}
-button{min-height:44px;background:var(--acc);color:#fff;border:0;border-radius:999px;padding:0 18px;font-weight:700;cursor:pointer}
+button{min-height:48px;background:var(--acc);color:#fff;border:0;border-radius:16px;padding:0 20px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(196,71,31,.18)}
 button:hover:not(:disabled){background:var(--accd)}
-button.ghost{background:var(--tint);color:var(--ink)}button.ghost:hover:not(:disabled){background:#D7DDCE}
-button.danger{background:transparent;color:var(--bad);border:2px solid #E8C9C6}button.danger:hover:not(:disabled){background:#FBEDEB}
-button.sm{min-height:36px;padding:0 14px;font-size:13px}
-button:disabled{opacity:.45;cursor:not-allowed}
-input,select{min-height:44px;padding:0 14px;border-radius:999px;border:2px solid var(--field);background:var(--bg);color:var(--ink)}
+button.ghost{background:var(--tint);color:var(--ink);box-shadow:none}button.ghost:hover:not(:disabled){background:#EFE6DA}
+button.danger{background:#fff;color:var(--bad);border:2px solid #F0CDBB;box-shadow:none}button.danger:hover:not(:disabled){background:#FDEBE1}
+button.sm{min-height:38px;padding:0 14px;font-size:14px;border-radius:12px}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+input,select{min-height:48px;padding:0 14px;border-radius:14px;border:2px solid var(--field);background:#fff;color:var(--ink)}
 input[type=checkbox],input[type=radio]{min-height:0;accent-color:var(--acc);width:18px;height:18px;vertical-align:-3px;margin:0 6px 0 0}
-.wrap{max-width:820px;margin:0 auto;padding:0 20px}
-header.top{background:var(--card);border-bottom:1px solid var(--line)}
-header.top .wrap{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:14px;padding-bottom:12px}
-h1{font-size:17px;font-weight:700;margin:0}h1 small{color:var(--mut);font-weight:600;margin-left:6px;font-size:13px}
-.who{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--mut2)}
-.av{width:32px;height:32px;border-radius:999px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none}
-.who select{min-height:40px;max-width:210px}
-nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 0 8px}
-.seg{display:flex;gap:4px;padding:4px;background:var(--tint);border-radius:999px}
-.seg button{flex:1;min-width:0;background:transparent;color:var(--mut2);font-weight:600;padding:0 8px;white-space:nowrap}
-.seg button:hover:not(:disabled){background:rgba(255,255,255,.55)}
-.seg button[aria-selected=true]{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 2px rgba(23,35,27,.08)}
-.seg .n{font-size:12px;color:var(--mut);margin-left:4px}
-main{padding-bottom:40px}
+.wrap{max-width:860px;margin:0 auto;padding:0 24px}
+header.top .wrap{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:20px;padding-bottom:6px}
+.brand{display:inline-flex;align-items:center;gap:10px;font-size:24px;font-weight:800;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.logo{width:40px;height:40px;border-radius:13px;background:var(--acc);display:flex;align-items:center;justify-content:center;flex:none}
+h1{font-size:15px;font-weight:600;margin:0;color:var(--mut)}h1 small{color:var(--mut);font-weight:600;font-size:15px}
+.pill{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border-radius:14px;background:#fff;box-shadow:var(--sh);font-size:14px;font-weight:600;color:var(--mut)}
+.who{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--mut);background:#fff;border-radius:16px;padding:4px 6px 4px 4px;box-shadow:var(--sh)}
+.av{width:36px;height:36px;border-radius:12px;background:var(--sunk);color:var(--ink);font-size:15px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.who select{min-height:40px;max-width:210px;border:0;background:var(--tint)}
+nav.tabs{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 10px}
+.seg{display:flex;gap:6px;padding:5px;background:#fff;border-radius:18px;box-shadow:var(--sh)}
+.seg button{flex:1;min-width:0;min-height:44px;background:transparent;color:var(--mut);font-weight:600;padding:0 8px;white-space:nowrap;border-radius:14px;box-shadow:none}
+.seg button:hover:not(:disabled){background:var(--tint)}
+.seg button[aria-selected=true]{background:var(--ink);color:#fff;font-weight:700}
+.seg .n{font-size:12px;opacity:.8;margin-left:4px}
+main{padding-bottom:48px}
 .panel[hidden]{display:none}
-.card{background:var(--card);border:0;border-radius:22px;padding:18px;margin:0 0 14px}
-.card.hero{border:2px solid var(--acc)}
-.agent{border-radius:22px 22px 22px 6px;padding:20px}
-.eyebrow{margin:0 0 6px;font-size:13px;font-weight:700;color:var(--acc)}
-.say{margin:0;font-size:22px;font-weight:700;line-height:1.25}
+.card{background:var(--card);border:0;border-radius:28px;padding:22px 24px;margin:0 0 18px;box-shadow:var(--sh)}
+.card.hero{border:2px solid #F0CDBB}
+.agent{background:transparent;box-shadow:none;padding:12px 4px 6px;text-align:center}
+.eyebrow{display:inline-block;margin:0 0 10px;padding:4px 12px;border-radius:8px;background:var(--sunk);font-size:14px;font-weight:700;color:var(--ink)}
+.say{margin:0;font-size:40px;font-weight:700;line-height:1.08;letter-spacing:-.02em}
 .row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
 .inl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
-.st{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--softink);white-space:nowrap}
-.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--tint);color:var(--mut2)}
+.st{display:inline-block;font-size:13px;font-weight:700;padding:3px 10px;border-radius:8px;background:var(--soft);color:var(--softink);white-space:nowrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{display:inline-block;font-size:13px;font-weight:600;padding:4px 11px;border-radius:10px;background:var(--tint);color:var(--mut2)}
 .chip.ok{background:var(--soft);color:var(--softink)}
 .v{display:block}
-h2{font-size:18px;font-weight:700;margin:0 0 8px}h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:18px 0 8px;font-weight:700}
+h2{font-size:22px;font-weight:700;margin:0 0 10px;letter-spacing:-.01em}h3{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);margin:22px 0 8px;font-weight:700}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}table{width:100%;border-collapse:collapse;font-size:14px}
-td,th{padding:10px 8px;border-top:1px solid var(--line);vertical-align:top;text-align:left}th{font-size:12px;color:var(--mut);font-weight:700;border-top:0}
-.big{font-size:22px;font-weight:700;margin-top:4px}.sm{font-size:13px}
-.banner{background:var(--warnbg);border-radius:16px;padding:10px 14px;color:var(--warn);font-size:13px;font-weight:600;margin:10px 0}
-.err{color:var(--bad);font-size:13px;font-weight:600;margin-top:6px}.err:empty,.busy:empty{display:none}
-.busy{color:var(--softink);background:var(--soft);display:inline-block;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;margin-top:8px}
-.grp{background:var(--card);border-radius:20px;padding:6px 16px;margin-bottom:10px}.grp>b{display:block;padding:10px 0 2px;font-size:16px;text-transform:capitalize}
-.req{padding:11px 0;border-top:1px solid var(--line)}.grp>b+.req{border-top:0}
-ul.plain{list-style:none;padding:0;margin:0}ul.plain li{padding:11px 0;border-top:1px solid var(--line)}ul.plain li:first-child{border-top:0}
-details{margin-top:12px;background:var(--bg);border-radius:16px;padding:10px 14px}summary{cursor:pointer;font-weight:700;min-height:28px}
-.item{padding:10px 0;border-top:1px solid var(--line);font-size:14px}
-form.stack{display:grid;gap:10px;margin-top:12px}
-.composer{display:flex;gap:8px;align-items:center}.composer input{flex:1;min-width:0;min-height:48px}.composer button{min-height:48px}
-.hint{min-height:40px;padding:0 14px;border:2px solid var(--acc);background:var(--soft);color:var(--softink);font-size:13px;text-align:left}
-.hint:hover:not(:disabled){background:#D3E8D6}
-.sumlink{display:flex;align-items:center;gap:12px;width:100%;padding:16px 18px;border-radius:22px;background:var(--card);color:var(--ink);text-align:left;font-weight:400;min-height:0}
-.sumlink:hover:not(:disabled){background:#FAFBF7}
-.sumlink b{font-weight:700}
-.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
-.tile{padding:12px 14px;border-radius:16px;background:var(--bg)}
+td,th{padding:10px 8px;border-top:1px solid var(--line);vertical-align:top;text-align:left}th{font-size:12px;color:var(--mut);font-weight:700;border-top:0;text-transform:uppercase;letter-spacing:.04em}
+.big{font-size:28px;font-weight:700;margin-top:4px;letter-spacing:-.01em}.sm{font-size:14px}
+.banner{background:var(--warnbg);border-left:6px solid var(--sunk);border-radius:14px;padding:10px 14px;color:var(--warn);font-size:14px;font-weight:700;margin:10px 0}
+.err{color:var(--bad);font-size:14px;font-weight:700;margin-top:6px}.err:empty,.busy:empty{display:none}
+.busy{color:var(--ink);background:var(--sun);display:inline-block;border-radius:12px;padding:5px 12px;font-size:14px;font-weight:600;margin-top:10px}
+.grp{background:var(--card);border-radius:24px;padding:8px 20px;margin-bottom:12px;box-shadow:var(--sh)}.grp>b{display:inline-block;margin:12px 0 4px;padding:4px 12px;border-radius:10px;background:var(--peach);font-size:16px;text-transform:capitalize}
+.grp:nth-child(3n+2)>b{background:var(--soft)}.grp:nth-child(3n)>b{background:var(--sun)}
+.req{padding:12px 0;border-top:1px solid var(--line)}.grp>b+.req{border-top:0}
+ul.plain{list-style:none;padding:0;margin:0}ul.plain li{padding:12px 0;border-top:1px solid var(--line)}ul.plain li:first-child{border-top:0}
+details{margin-top:14px;background:var(--tint);border-radius:18px;padding:12px 16px}summary{cursor:pointer;font-weight:700;min-height:28px}
+.item{padding:12px 0;border-top:1px solid var(--field);font-size:15px}
+.ev{font-size:13px;color:var(--mut);margin-top:2px}
+form.stack{display:grid;gap:10px;margin-top:14px}
+.composer{display:flex;gap:8px;align-items:center}.composer input{flex:1;min-width:0;min-height:52px;border-radius:16px}.composer button{min-height:52px}
+.hint{min-height:40px;padding:0 14px;border:0;background:var(--peach);color:var(--ink);font-size:14px;font-weight:600;text-align:left;border-radius:12px;box-shadow:none}
+.hint:nth-child(3n+2){background:var(--soft)}.hint:nth-child(3n){background:var(--sun)}
+.hint:hover:not(:disabled){background:#F0CDBB}
+.sumlink{display:flex;align-items:center;gap:12px;width:100%;padding:22px 24px;border-radius:28px;background:var(--card);color:var(--ink);text-align:left;font-weight:400;min-height:0;box-shadow:var(--sh)}
+.sumlink:hover:not(:disabled){background:#fff;box-shadow:0 14px 36px rgba(70,45,20,.12)}
+.sumlink b{font-weight:700;font-size:20px}
+.sumlink.sun{background:var(--sun);box-shadow:none}.sumlink.sun:hover:not(:disabled){background:#F9E6B0}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.tile{padding:14px 16px;border-radius:20px;background:var(--tint)}
 fieldset label{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 0}
 .pay label select{margin-left:4px}
-@media (max-width:480px){.wrap{padding:0 16px}.say{font-size:20px}.seg button{font-size:13px;padding:0 4px}.who select{max-width:170px}}
+.dots{position:fixed;inset:0;pointer-events:none;z-index:0}header.top,main{position:relative;z-index:1}.dots i{position:absolute;border-radius:999px}
+@media (max-width:480px){.wrap{padding:0 16px}.say{font-size:30px}.seg button{font-size:14px;padding:0 4px}.who select{max-width:150px}.who>span:not(.av){display:none}.card{padding:18px;border-radius:24px}.big{font-size:24px}.brand{font-size:22px}}
 </style>
 </head>
 <body>
+<div class="dots" aria-hidden="true"><i style="left:6%;top:30%;width:14px;height:14px;background:#F2B441"></i><i style="left:88%;top:16%;width:12px;height:12px;background:#A9C58A"></i><i style="left:4%;top:86%;width:18px;height:18px;background:#F08A6C"></i></div>
 <header class="top"><div class="wrap">
   <div style="min-width:0">
-    <h1>Group grocery run <small id="gname"></small></h1>
-    <div class="inl" style="margin-top:4px"><span class="st" id="rstate" aria-live="polite"></span><span class="mut sm" id="rver"></span><a href="/" class="sm">Occasions</a></div>
+    <a href="/" class="brand" aria-label="Pantry, back to Occasions"><span class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="7.5" y="2.5" width="9" height="3.2" rx="1.2" fill="#FFFFFF"/><path d="M6.5 7h11A2.5 2.5 0 0 1 20 9.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 18.5v-9A2.5 2.5 0 0 1 6.5 7z" fill="#FFFFFF"/><path d="M9 12.8v2.9M12 11.2v6.1M15 12.8v2.9" stroke="#C4471F" stroke-width="1.8" stroke-linecap="round"/></svg></span>Pantry</a>
+    <div class="inl" style="margin-top:8px"><h1>Group run <small id="gname"></small></h1><span class="st" id="rstate" aria-live="polite"></span><span class="mut sm" id="rver"></span><a href="/" class="sm">Occasions</a></div>
   </div>
-  <label class="who"><span class="av" id="whoav" aria-hidden="true">?</span><span>Signed in as</span> <select id="who"></select></label>
+  <label class="who"><span class="av" id="whoav" aria-hidden="true">?</span><span>You are</span> <select id="who"></select></label>
 </div></header>
 <main class="wrap">
   <nav class="tabs" aria-label="Sections"><div class="seg" role="tablist">
     <button type="button" role="tab" id="t-home" aria-controls="p-home" data-tab="home">Home</button>
-    <button type="button" role="tab" id="t-list" aria-controls="p-list" data-tab="list">List<span class="n" id="nlist"></span></button>
+    <button type="button" role="tab" id="t-list" aria-controls="p-list" data-tab="list">List &amp; prefs<span class="n" id="nlist"></span></button>
     <button type="button" role="tab" id="t-basket" aria-controls="p-basket" data-tab="basket">Basket</button>
-    <button type="button" role="tab" id="t-activity" aria-controls="p-activity" data-tab="activity">Activity</button>
+    <button type="button" role="tab" id="t-activity" aria-controls="p-activity" data-tab="activity">Confirmed</button>
   </div></nav>
 
   <section class="panel" id="p-home" role="tabpanel" aria-labelledby="t-home">
     <div class="card agent">
-      <p class="eyebrow">Your grocery agent</p>
-      <p class="say">Tell me anything the group needs.</p>
+      <p class="eyebrow">Next run</p>
+      <p class="say">What do we need this run?</p>
       <p class="mut sm" id="hmeta" style="margin:8px 0 0"></p>
     </div>
     <div class="card">
-      <h2>Add something</h2>
+      <h2>Tell Pantry</h2>
       <form id="addf" class="composer"><input id="addin" placeholder="What does the group need?" aria-label="Request text" autocomplete="off"><button>Add</button></form>
-      <p class="mut sm" style="margin:12px 0 6px;font-weight:600">Try one of these</p>
+      <p class="mut sm" style="margin:14px 0 8px;font-weight:600">Or try one of these</p>
       <div class="chips" id="hints"></div>
       <div id="addbusy" class="busy" aria-live="polite"></div><div id="adderr" class="err" role="alert"></div>
     </div>
-    <button type="button" class="sumlink" data-go="list">
+    <button type="button" class="sumlink" data-go="list" style="margin-bottom:12px">
       <span style="flex:1;min-width:0"><b id="sumcount" style="display:block">This run</b><span class="mut sm" id="sumtext" style="display:block;margin-top:3px"></span></span>
       <span aria-hidden="true" class="mut">&rsaquo;</span>
     </button>
-    <button type="button" class="sumlink" data-go="basket" style="margin-top:10px">
-      <span style="flex:1;min-width:0"><b style="display:block">Basket and approvals</b><span class="mut sm" id="sumbasket" style="display:block;margin-top:3px"></span></span>
+    <button type="button" class="sumlink sun" data-go="basket">
+      <span style="flex:1;min-width:0"><b style="display:block">Basket approval</b><span class="mut sm" id="sumbasket" style="display:block;margin-top:3px"></span></span>
       <span aria-hidden="true" class="mut">&rsaquo;</span>
     </button>
   </section>
 
   <section class="panel" id="p-list" role="tabpanel" aria-labelledby="t-list" hidden>
-    <h2 style="font-size:24px;margin:6px 0 10px">This run</h2>
+    <h2 style="font-size:32px;margin:6px 0 12px;letter-spacing:-.02em">Grocery list</h2>
     <div id="list"></div><div id="listerr" class="err" role="alert"></div>
     <div class="card" style="margin-top:14px">
-      <h2>Preferences</h2>
+      <h2>Your food preferences</h2><p class="mut sm" style="margin:-4px 0 8px">Tell me once. I won't ask again.</p>
       <ul class="plain" id="prefs"></ul>
       <form id="preff" class="stack">
         <div class="inl"><input id="psub" placeholder="Subject (e.g. detergent)" required aria-label="Subject" style="flex:1;min-width:140px"><input id="pval" placeholder="Value (e.g. fragrance-free)" required aria-label="Value" style="flex:1;min-width:140px"></div>
@@ -131,7 +139,7 @@ fieldset label{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8p
 
   <section class="panel" id="p-basket" role="tabpanel" aria-labelledby="t-basket" hidden>
     <div class="card pay">
-      <div class="row"><h2>Payment</h2><span class="mut sm" id="paycoord"></span></div>
+      <div class="row"><h2>How we pay</h2><span class="mut sm" id="paycoord"></span></div>
       <fieldset style="border:0;padding:0;margin:0" id="payfs">
         <legend class="sm mut">How should this run be paid?</legend>
         <label><input type="radio" name="pmode" value="group_payer"> One group payer
@@ -147,7 +155,7 @@ fieldset label{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8p
   </section>
 
   <section class="panel" id="p-activity" role="tabpanel" aria-labelledby="t-activity" hidden>
-    <div class="card"><h2>Audit timeline</h2><div class="tw"><table><thead><tr><th>Time</th><th>Actor</th><th>Decision</th><th>Outcome</th></tr></thead><tbody id="audit"></tbody></table></div></div>
+    <div class="card"><h2>Tracking and activity</h2><p class="mut sm" style="margin:-4px 0 10px">Audit timeline of every decision. Orders here are synthetic demo orders, not real purchases.</p><div class="tw"><table><thead><tr><th>Time</th><th>Actor</th><th>Decision</th><th>Outcome</th></tr></thead><tbody id="audit"></tbody></table></div></div>
   </section>
 </main>
 <script>
@@ -212,7 +220,7 @@ function renderSummary() {
   $("#sumtext").textContent = items.length ? items.slice(0, 3).join(", ") + (items.length > 3 ? ` and ${items.length - 3} more` : "") : "Nothing yet. Add the first item above.";
   const p = S.plan, a = S.approvals, x = S.execution;
   $("#sumbasket").textContent = x ? "Execution: " + String(x.state || "").replace(/_/g, " ")
-    : !p ? "No plan yet. Build one from the Basket tab."
+    : !p ? "No plan yet. Build one from Basket."
     : p.input_version !== S.run.version ? "Plan is out of date — rebuild."
     : a && (a.pending || []).length ? "Waiting on: " + a.pending.map(name).join(", ") : "Plan ready.";
 }
@@ -265,7 +273,7 @@ function renderPlan() {
   const nItems = (p.lines || []).length;
   const verif = [...new Set(quotes.map(q => q.verification).filter(Boolean))];
   const stale = p.input_version !== S.run.version;
-  let h = `<div class="card hero"><div class="row"><h2>Best among the sources checked</h2><span class="mut sm">plan ${esc(p.id)} · built from version ${esc(p.input_version)}</span></div>`;
+  let h = `<div class="card hero"><div class="row"><h2>Your basket is ready</h2><span class="v mut sm" style="width:100%;order:3">Best among the sources checked</span><span class="mut sm">plan ${esc(p.id)} · built from version ${esc(p.input_version)}</span></div>`;
   if (stale) h += `<p class="warn"><b>Plan is out of date — rebuild.</b> The list changed since this plan was built.</p>`;
   verif.forEach(v => h += `<div class="banner" role="note">${esc(v)}</div>`);
   if (rec) h += `<div class="big">${esc(rec.retailer)} <span class="mut sm">${esc(rec.platform)}</span></div>
@@ -295,11 +303,14 @@ function renderPlan() {
         ${(it.constraints_met||[]).length ? `<div class="chips">${it.constraints_met.map(x => `<span class="chip ok">✓ ${esc(x)}</span>`).join("")}</div>` : ""}
         ${(it.rejected||[]).length ? `<div class="sm mut">Rejected: ${it.rejected.map(r => esc(r.product) + " — " + esc(r.why)).join("; ")}</div>` : ""}
         ${it.surplus ? `<div class="sm mut">Surplus: ${esc(it.surplus)}</div>` : ""}
+        ${it.match ? `<div class="ev">Match: ${esc(it.match.label)}${it.match.score != null ? " · score " + esc(it.match.score) : ""}${it.match.engine ? " · " + esc(it.match.engine) : ""}</div>` : ""}
+        ${it.attribute_evidence ? `<div class="ev">Attribute evidence: ${esc(it.attribute_evidence)}</div>` : ""}
         <div class="sm mut">${o.evidence_url ? `<a href="${esc(o.evidence_url)}" target="_blank" rel="noopener">evidence</a> · ` : ""}checked ${esc(o.checked_at)} · ${esc(o.verification)}</div></div>`;
     });
     h += `</details>`;
   }
   if ((p.why || []).length) h += `<h3>Why this basket?</h3><ul>${p.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  if (p.guild_session) h += `<p class="ev" style="margin-top:14px">Guild review session: ${esc(p.guild_session)}</p>`;
   if ((p.questions || []).length) h += `<h3>Questions</h3><ul>${p.questions.map(q => `<li class="warn">${esc(typeof q === "string" ? q : (q.text || q.question || JSON.stringify(q)))}</li>`).join("")}</ul>`;
   el.innerHTML = h + `</div>`;
 }
@@ -335,7 +346,7 @@ function renderExec() {
   if (!p && !x) { el.innerHTML = ""; return; }
   const ready = a && !(a.pending || []).length && p && p.input_version === S.run.version;
   const done = x && ["order_placed_synthetic", "authorizing", "purchasing", "refunded"].includes(x.state);
-  let h = `<div class="card"><h2>Pay and place order</h2>`;
+  let h = `<div class="card"><h2>Confirm and place order</h2><p class="mut sm" style="margin:-4px 0 10px">Orders in this demo are synthetic: no real purchase or delivery happens.</p>`;
   if (!x || !done) h += `<div class="inl"><button id="exec" ${ready && !busy ? "" : "disabled"}>Authorize payments and place order</button>
     <button id="execbad" class="ghost sm" ${ready && !busy ? "" : "disabled"}>Demo: simulate a declined card for Alex</button></div>
     ${ready ? "" : `<p class="mut sm">Enabled once every required member has approved the current plan.</p>`}`;
