@@ -11,6 +11,18 @@ Built at the Personal Agents Hackathon (San Francisco, 2026-11-20).
 - **Web app:** `/group` (Pantry). The original family-occasions agent is at `/`.
 - **Demo video:** `pantry-demo.mp4` (submitted separately)
 
+## Screenshots
+
+| Home | List and preferences |
+|---|---|
+| ![Home](docs/screenshots/1-home.png) | ![List and preferences](docs/screenshots/2-list-and-preferences.png) |
+
+| Basket: plan, approvals, payments | Audit trail |
+|---|---|
+| ![Basket](docs/screenshots/3-basket-plan-approvals-payments.png) | ![Audit trail](docs/screenshots/4-audit-trail.png) |
+
+Mobile: ![Mobile](docs/screenshots/5-mobile.png)
+
 ## How it works
 
 1. **Ask in plain words.** "We need laundry detergent", "1 gallon of milk for me". Nemotron on Nebius
