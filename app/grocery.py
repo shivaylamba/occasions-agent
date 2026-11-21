@@ -555,6 +555,16 @@ def plan(member):
           evidence=why + ([f"Cognee: {ctx[:200]}"] if ctx else []), action="save_plan",
           outcome=f"{len(feasible)}/{len(quotes)} sources feasible")
     telemetry.track("plan_built", member, {"feasible_sources": len(feasible), "sources": len(quotes)})
+    # Guild AI: hand the plan (non-personal metadata only) to the Guild shopping agent for a review session.
+    from . import guild
+    if guild.live() and best:
+        g = guild.start_session(f"Group grocery plan {pid}: {best['retailer']} basket, {len(best['items'])} items, "
+                                f"{len(p['allocations'])} payer(s), estimated total {best['total']} USD, "
+                                f"{len(feasible)}/{len(quotes)} sources feasible. Review for missing items or risks; reply OK or list concerns.")
+        p["guild_session"] = g.get("session_id")
+        db.put("plans", pid, p, grp=run["id"], seq=run["version"])
+        audit(run["id"], "agent", f"Guild review session {'started' if g['ok'] else 'FAILED'}",
+              evidence=[f"Guild session {g.get('session_id') or g.get('error')}"], action="guild_session")
     return p
 
 

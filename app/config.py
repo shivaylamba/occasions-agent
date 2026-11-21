@@ -62,4 +62,5 @@ def integrations():
         "SingleStore": "live" if db.kind == "singlestore" else ("blocked" if db.blocker else "fixture"),
         "Persona": "live" if env("PERSONA_LIVE") == "1" else ("gated" if env("PERSONA_API_KEY") else "fixture"),
         "Tokens&": _tokens_status(),
+        "Guild AI": "live" if env("GUILD_API_KEY") else "fixture",
     }
