@@ -32,6 +32,7 @@ def fake_call(app, tool, args, timeout=60):
 def fresh(monkeypatch):
     monkeypatch.setattr(firedrill, "call", fake_call)
     monkeypatch.setattr(firedrill, "post", lambda text: {"ok": True})
+    monkeypatch.setattr(firedrill, "send_receipt", lambda s, b: {"ok": True, "id": "m1", "tool": "gmail"})
     CALLS.clear()
     grocery.reset_run()
     grocery.add_request("shivay", "We need laundry detergent, fragrance-free")

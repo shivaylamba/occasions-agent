@@ -42,6 +42,11 @@ LLM_MODEL_SMALL = env("LLM_MODEL_SMALL") or env("ARCEE_MODEL_SMALL")
 LLM_MODEL_LARGE = env("LLM_MODEL_LARGE") or env("ARCEE_MODEL_LARGE")
 
 
+def _tokens_status():
+    from . import tokens
+    return "live" if tokens.live() else ("pending" if env("TOKENS_OBSERVE_API_KEY") else "fixture")
+
+
 def integrations():
     """Integration status for the UI: live | gated | blocked | fixture. No secrets."""
     from .db import db
@@ -56,5 +61,5 @@ def integrations():
         "Amplitude": "live" if env("AMPLITUDE_API_KEY") else "fixture",
         "SingleStore": "live" if db.kind == "singlestore" else ("blocked" if db.blocker else "fixture"),
         "Persona": "live" if env("PERSONA_LIVE") == "1" else ("gated" if env("PERSONA_API_KEY") else "fixture"),
-        "Tokens&": "pending" if env("TOKENS_OBSERVE_API_KEY") else "fixture",
+        "Tokens&": _tokens_status(),
     }

@@ -51,10 +51,13 @@ def sie_scores(query, docs):
 
 # ---------- Nebius Token Factory: the decision ----------
 
-def _llm(messages, max_tokens=1500):
-    r = httpx.post(NEBIUS_URL + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {env('NEBIUS_API_KEY')}"},
-                   json={"model": LLM_MODEL, "max_tokens": max_tokens, "temperature": 0, "messages": messages})
-    j = r.json()
+def _llm(messages, max_tokens=1500, feature="agent-decide"):
+    from . import tokens
+    with tokens.model_call(LLM_MODEL, feature) as done:
+        r = httpx.post(NEBIUS_URL + "/chat/completions", timeout=120, headers={"Authorization": f"Bearer {env('NEBIUS_API_KEY')}"},
+                       json={"model": LLM_MODEL, "max_tokens": max_tokens, "temperature": 0, "messages": messages})
+        j = r.json()
+        done(r.status_code, j.get("usage"))
     content = j["choices"][0]["message"].get("content") or ""
     return content, j.get("usage") or {}
 

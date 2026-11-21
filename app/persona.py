@@ -30,7 +30,7 @@ def start(member):
                            json={"data": {"attributes": {"inquiry-template-id": tpl, "reference-id": member}}})
             iid = r.json()["data"]["id"]
             doc = {"member": member, "verified": False, "inquiry_id": iid, "engine": "persona",
-                   "link": f"https://withpersona.com/verify?inquiry-id={iid}"}
+                   "link": f"https://inquiry.withpersona.com/verify?inquiry-id={iid}"}
             db.put("claims", f"verified:{member}", doc, grp="verified")
             return doc
         except Exception as e:

@@ -255,6 +255,55 @@ OFFERS = [
     ("costco-sameday", "CO-4001", "Bananas 3 lb bag", "bananas", 3, "lb", "1.99", [], False, "in_stock", None),
     ("costco-sameday", "CO-5001", "Dave's Killer Bread 2 x 27 oz", "bread", 2, "loaf", "9.99", ["organic"], False, "out_of_stock", None),
 ]
+# ---------------------------------------------------------------- Senso: verified product attributes
+
+def _senso_doc(o):
+    rk, sku, name, match, pq, pu, price, attrs, taxable, stock, coupon = o
+    return (f"Grocery product facts: {name} (SKU {sku})",
+            f"# {name} (SKU {sku}), {RETAILERS[rk]['retailer']}\nCategory: {match}\nPack: {pq} {pu}\n"
+            f"Verified attributes: {', '.join(attrs) if attrs else 'none'}.\n"
+            + ("This product is fragrance-free.\n" if "fragrance-free" in attrs else
+               ("This product is NOT fragrance-free (it contains added fragrance).\n" if match == "laundry detergent" else "")))
+
+
+def sync_grocery_kb():
+    """Load verified grocery product attributes into Senso once."""
+    from . import mcpcall, senso
+    if not senso.live() or db.get("claims", "senso_grocery_kb"):
+        return 0
+    n = 0
+    for o in OFFERS:
+        title, text = _senso_doc(o)
+        r = mcpcall.call(env("SENSO_MCP_URL"), "senso_create_doc", {"title": title, "text": text,
+                                                                     "summary": f"Verified attributes for SKU {o[1]}"}, senso._h())
+        n += 1 if r["ok"] else 0
+        time.sleep(1.2)  # stay under Senso's rate limit
+    db.put("claims", "senso_grocery_kb", {"docs": n, "at": _now()}, grp="system")
+    return n
+
+
+def senso_attributes(sku, name):
+    """Retrieve a product's verified attributes from Senso (cached). Returns (attrs or None, evidence)."""
+    from . import mcpcall, senso
+    if not senso.live():
+        return None, None
+    c = db.get("claims", f"senso_g:{sku}")
+    if c:
+        return c["attrs"], c["evidence"]
+    r = mcpcall.call(env("SENSO_MCP_URL"), "senso_search", {"query": f"Grocery product facts: {name} (SKU {sku}) verified attributes",
+                                                            "mode": "context", "max_results": 3}, senso._h(), timeout=45)
+    if not r["ok"]:
+        return None, None
+    hit = next((h for h in r["data"].get("results") or [] if f"(SKU {sku})" in (h.get("text") or "")), None)
+    if not hit:
+        return None, None
+    m = re.search(r"Verified attributes: (.+?)\.", hit["text"])
+    attrs = [] if not m or m.group(1) == "none" else [a.strip() for a in m.group(1).split(",")]
+    ev = f"Senso KB \"{hit.get('title')}\" (score {round(hit.get('score') or 0, 3)})"
+    db.put("claims", f"senso_g:{sku}", {"attrs": attrs, "evidence": ev}, grp="senso_cache")
+    return attrs, ev
+
+
 CA_SALES_TAX = Decimal("0.08625")  # San Francisco rate; most food is exempt in California, detergent is taxable
 
 
@@ -367,10 +416,18 @@ def quote_retailer(rk, lines):
     for ln in lines:
         need = ln["quantity"]
         cons = hard_constraints(ln)
-        cands = [o for o in offers_for(ln["item"], rk) if o["stock"] == "in_stock" and all(c in o["attributes"] for c in cons)]
+        all_offers = offers_for(ln["item"], rk)
+        if cons:  # required attributes are checked against Senso's verified facts, not the listing
+            for o in all_offers:
+                attrs, ev = senso_attributes(o["sku"], o["product"])
+                if attrs is not None:
+                    o["attributes"], o["attribute_evidence"] = attrs, ev
+                else:
+                    o["attribute_evidence"] = "fixture attributes (Senso unavailable)"
+        cands = [o for o in all_offers if o["stock"] == "in_stock" and all(c in o["attributes"] for c in cons)]
         rejected = [{"product": o["product"], "why": "out of stock" if o["stock"] != "in_stock" else
                      f"missing required: {', '.join(c for c in cons if c not in o['attributes'])}"}
-                    for o in offers_for(ln["item"], rk) if o not in cands]
+                    for o in all_offers if o not in cands]
         if not cands:
             missing.append({"item": ln["item"], "why": "; ".join(r["why"] for r in rejected) or "not carried"})
             continue
@@ -385,7 +442,16 @@ def quote_retailer(rk, lines):
             coupon = dict(coupon)
             coupon["state"] = "eligibility checked (fixture terms)"  # never "applied" until checkout confirms
             disc = _d(coupon["discount"])
-        items.append({"item": ln["item"], "allocation": ln["allocation"], "per_member": ln["per_member"],
+        # Superlinked SIE: how well the chosen product matches what people actually asked for.
+        req_text = "; ".join(x["text"] for x in ln["requests"])[:300]
+        sc = models.sie_scores(req_text, [best["product"]])
+        match = None
+        if sc:
+            s = sc[0]
+            match = {"score": s, "label": "exact match" if s >= 0.6 else ("likely match" if s >= 0.45 else "uncertain match"),
+                     "engine": f"SIE {models.SIE_MODEL}"}
+        items.append({"item": ln["item"], "allocation": ln["allocation"], "per_member": ln["per_member"], "match": match,
+                      "attribute_evidence": best.get("attribute_evidence"),
                       "participants": ln.get("participants"), "quantity": need, "packages": packs,
                       "offer": best, "constraints_met": cons, "rejected": rejected,
                       "unit_price": str((_d(best["price"]) / _d(best["pack_qty"])).quantize(CENT)) + f"/{best['pack_unit']}",
@@ -620,6 +686,19 @@ def execute(member, decline_card_for=None):
     s = firedrill.post(f":shopping_trolley: Grocery run {p['id']}: {best['retailer']} basket ${best['total']} "
                        f"(estimate), delivery {best['window']}. Synthetic order {act['order']['reference']}; no live retailer checkout yet.")
     act["slack"] = s.get("ok")
+    # Gmail receipt per payer: their charge, what it covers, and the synthetic-order caveat.
+    act["receipts"] = []
+    for pay in act["payments"]:
+        alloc = next(a for a in p["allocations"] if a["member"] == pay["member"])
+        covers = alloc["covers"] if isinstance(alloc["covers"], str) else ", ".join(alloc["covers"])
+        g = firedrill.send_receipt(
+            f"Group grocery receipt: ${pay['amount']} for {member_name(pay['member'])}",
+            f"{member_name(pay['member'])}, your share of the {best['retailer']} grocery run is ${pay['amount']} "
+            f"(payment {pay['intent']}, {pay['state']}).\nCovers: {covers}\nDelivery: {best['window']} to {p['address']}.\n"
+            f"Order {act['order']['reference']}: {act['order']['status']}.")
+        act["receipts"].append({"member": pay["member"], "ok": g["ok"], "id": g.get("id")})
+        audit(run["id"], "agent", f"Receipt emailed for {member_name(pay['member'])}: {'sent' if g['ok'] else 'FAILED'}",
+              evidence=[g["tool"]], action="notify", outcome="sent" if g["ok"] else "failed")
     db.put("actions", key, act, grp=run["id"])
     telemetry.track("order_placed", member, {"mode": p["payment_mode"], "synthetic": True})
     return act

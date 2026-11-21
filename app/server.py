@@ -35,6 +35,8 @@ async def startup():
         try:
             print("senso kb docs created:", senso.sync_kb())
             print("cognee facts seeded:", memory.seed_cognee())
+            from . import grocery as _g
+            print("senso grocery docs created:", _g.sync_grocery_kb())
         except Exception as e:
             print("sponsor setup failed:", type(e).__name__)
     asyncio.get_event_loop().run_in_executor(None, setup_sponsors)
