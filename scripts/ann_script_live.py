@@ -68,3 +68,15 @@ print("Scene 11 · approvals")
 for a in (p or {}).get("allocations", []):
     st = call("POST", "/api/g/approve", a["member"], {"plan_id": p["id"], "limit": a["amount"]})
     print(f"   {a['member']} approved -> {len(st.get('approved', []))} of {len(st.get('required', []))}")
+
+print("Scene 12 · pay and order")
+x = call("POST", "/api/g/execute", "ann")
+print("   state:", x.get("state"))
+for pmt in x.get("payments", []):
+    print(f"   {pmt['member']:7} ${pmt['amount']:>6} {pmt['state']}")
+print("   order:", (x.get("order") or {}).get("retailer"), (x.get("order") or {}).get("reference"), "|", (x.get("order") or {}).get("status"))
+print("   receipts:", [(r["member"], r["ok"]) for r in x.get("receipts", [])], "| slack:", x.get("slack"))
+d = call("POST", "/api/g/execute", "ann")
+print("   duplicate request -> same attempt:", d.get("attempt") == x.get("attempt"))
+rf = call("POST", "/api/g/refund", "ann")
+print("   refund:", [(p["member"], p["state"]) for p in rf.get("payments", [])])
