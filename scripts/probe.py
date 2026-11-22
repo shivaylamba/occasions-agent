@@ -43,7 +43,7 @@ def run(name, fn):
 def nebius():
     r = httpx.post("https://api.tokenfactory.nebius.com/v1/chat/completions", timeout=60,
                    headers={"Authorization": f"Bearer {E('NEBIUS_API_KEY')}"},
-                   json={"model": "nvidia/Nemotron-3_5-Lightning", "max_tokens": 400,
+                   json={"model": "moonshotai/Kimi-K3.1-Pro", "max_tokens": 400,
                          "messages": [{"role": "user", "content": "Reply with the word ok."}]})
     j = r.json()
     return r.status_code, short(j.get("choices", [{}])[0].get("message", {}).get("content") or j, 120)

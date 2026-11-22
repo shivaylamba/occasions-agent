@@ -25,7 +25,7 @@ Each family member's own agent (Claude, ChatGPT, …) connects to the shared fam
 - **Persona:** GovID sandbox inquiry verifies the human behind a spending mandate.
 - **Tokens& Observe:** official SDK sends metadata-only telemetry for every model call and tool call.
 - **Guild AI:** every plan starts a review session with our shopping agent in a Guild workspace.
-- **Nebius Token Factory (Nemotron):** request extraction and decisions.
+- **Nebius Token Factory (Kimi K3.1 Pro):** request extraction and decisions.
 
 ## Honest limits
 - No live retailer API access was available, so retailer prices are a labelled fixture and orders are labelled "synthetic", never "purchased".
