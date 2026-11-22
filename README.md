@@ -27,15 +27,23 @@ The demo catalog uses a dated price snapshot for five national products at Walma
 
 ## Screenshots
 
-| Home | List and preferences |
-|---|---|
-| ![Home](docs/screenshots/1-home.png) | ![List and preferences](docs/screenshots/2-list-and-preferences.png) |
+From a live run of the Maple House flow (Kimi K3.1 Pro, SingleStore, Firedrill).
 
-| Basket: plan, approvals, payments | Audit trail |
+| Talk to Pantry | Shared list (Everyone / Mine) |
 |---|---|
-| ![Basket](docs/screenshots/3-basket-plan-approvals-payments.png) | ![Audit trail](docs/screenshots/4-audit-trail.png) |
+| ![Chat](docs/screenshots/1-chat.png) | ![Shared list](docs/screenshots/4-shared-list.png) |
 
-Mobile: ![Mobile](docs/screenshots/5-mobile.png)
+| Profile chips | Last call |
+|---|---|
+| ![Profile](docs/screenshots/3-profile.png) | ![Last call](docs/screenshots/5-last-call.png) |
+
+| Household and invites | Basket: comparison, shares, approvals |
+|---|---|
+| ![Household](docs/screenshots/2-household.png) | ![Basket](docs/screenshots/6-basket.png) |
+
+Order and audit trail: ![Order](docs/screenshots/7-order-and-audit.png)
+
+Mobile: ![Mobile](docs/screenshots/8-mobile.png)
 
 ## How it works
 
@@ -75,7 +83,7 @@ Mobile: ![Mobile](docs/screenshots/5-mobile.png)
 | **Persona** | A GovID sandbox inquiry verifies the human behind a spending mandate. The occasions agent never buys for an unverified member. | `app/persona.py` |
 | **Tokens&** | The official `tokensand_observe` SDK sends metadata-only telemetry (model, timing, token counts, status) for every Nemotron call and every MCP tool call. No prompts or outputs are sent. | `app/tokens.py`, `app/models.py`, `app/mcpcall.py` |
 | **Guild AI** | Every basket plan starts a review session with our `shopping-agent` in a Guild workspace (`POST /v1/workspaces/{id}/sessions`). The prompt holds only non-personal metadata, and the session ID is recorded in the plan and audit trail. | `app/guild.py`, `app/grocery.py` (`plan`) |
-| Nebius Token Factory | Nemotron (`nvidia/Nemotron-3_5-Lightning`) for request extraction and decisions. | `app/models.py`, `app/grocery.py` (`extract`) |
+| Nebius Token Factory | Kimi K3.1 Pro (`moonshotai/Kimi-K3.1-Pro`) for request extraction, the conversation and decisions. | `app/models.py`, `app/grocery.py` (`extract`) |
 
 Not used: Airbyte (no source worth syncing for this flow) and Arcee AI (no API credit was available).
 

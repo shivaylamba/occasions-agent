@@ -78,5 +78,6 @@ print("   order:", (x.get("order") or {}).get("retailer"), (x.get("order") or {}
 print("   receipts:", [(r["member"], r["ok"]) for r in x.get("receipts", [])], "| slack:", x.get("slack"))
 d = call("POST", "/api/g/execute", "ann")
 print("   duplicate request -> same attempt:", d.get("attempt") == x.get("attempt"))
-rf = call("POST", "/api/g/refund", "ann")
+import os
+rf = {} if os.environ.get("NO_REFUND") else call("POST", "/api/g/refund", "ann")
 print("   refund:", [(p["member"], p["state"]) for p in rf.get("payments", [])])
