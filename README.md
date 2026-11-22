@@ -47,7 +47,7 @@ Mobile: ![Mobile](docs/screenshots/8-mobile.png)
 
 ## How it works
 
-1. **Ask in plain words.** "We need laundry detergent", "1 gallon of milk for me". Nemotron on Nebius
+1. **Ask in plain words.** "We need laundry detergent", "1 gallon of milk for me". Kimi K3.1 Pro on Nebius
    Token Factory extracts the item, quantity and unit, shared vs personal, and required attributes,
    and keeps who asked. Unknown values stay unknown.
 2. **Bring your own agent.** Each member's own agent (Claude, ChatGPT, Codex) connects to the family MCP
@@ -81,7 +81,7 @@ Mobile: ![Mobile](docs/screenshots/8-mobile.png)
 | **Superlinked (SIE)** | `BAAI/bge-m3` embeddings score how well each chosen product matches the original request (exact, likely or uncertain match), and rank candidates in the occasions agent. | `app/models.py` (`sie_scores`), `app/grocery.py` |
 | **Amplitude + Statsig** | **Amplitude:** funnel events (`request_added`, `plan_built`, `plan_approved`, `order_placed`, `payment_failed`) with no names, shopping text or private preferences. **Statsig:** the `agent_settings` dynamic config sets the auto-buy limit (`auto_buy_under`) and how early the agent acts (`act_days_before`), read on every run. | `app/telemetry.py`, `app/agent.py` |
 | **Persona** | A GovID sandbox inquiry verifies the human behind a spending mandate. The occasions agent never buys for an unverified member. | `app/persona.py` |
-| **Tokens&** | The official `tokensand_observe` SDK sends metadata-only telemetry (model, timing, token counts, status) for every Nemotron call and every MCP tool call. No prompts or outputs are sent. | `app/tokens.py`, `app/models.py`, `app/mcpcall.py` |
+| **Tokens&** | The official `tokensand_observe` SDK sends metadata-only telemetry (model, timing, token counts, status) for every Kimi K3.1 Pro call and every MCP tool call. No prompts or outputs are sent. | `app/tokens.py`, `app/models.py`, `app/mcpcall.py` |
 | **Guild AI** | Every basket plan starts a review session with our `shopping-agent` in a Guild workspace (`POST /v1/workspaces/{id}/sessions`). The prompt holds only non-personal metadata, and the session ID is recorded in the plan and audit trail. | `app/guild.py`, `app/grocery.py` (`plan`) |
 | Nebius Token Factory | Kimi K3.1 Pro (`moonshotai/Kimi-K3.1-Pro`) for request extraction, the conversation and decisions. | `app/models.py`, `app/grocery.py` (`extract`) |
 
@@ -138,5 +138,5 @@ recalls what the family knows (Cognee), checks every seller claim against Senso,
 - items the person already owns;
 - a prompt-injection review.
 
-It then picks with Nemotron and SIE, buys within a Persona-verified, Statsig-controlled mandate
+It then picks with Kimi K3.1 Pro and SIE, buys within a Persona-verified, Statsig-controlled mandate
 through a signed Personal Agent Protocol store, and shows a receipt of what it knew, checked and did.
