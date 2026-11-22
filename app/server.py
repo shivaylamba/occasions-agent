@@ -198,9 +198,79 @@ def g_refund(member: str = "shivay"):
 
 
 @app.post("/api/g/reset")
-def g_reset():
-    grocery.reset_run()
-    return {"ok": True}
+def g_reset(fresh: int = 0):
+    grocery.reset_run(fresh=bool(fresh))
+    return {"ok": True, "fresh": bool(fresh)}
+
+
+@app.post("/api/g/household")
+async def g_household(req: Request, member: str = "ann"):
+    b = await req.json()
+    return _g(grocery.create_household, member, b.get("name") or "Maple House", b.get("address"), b.get("zip"),
+              b.get("how_often"), b.get("requests_close"), b.get("window"), b.get("payment_mode"))
+
+
+@app.post("/api/g/invite")
+async def g_invite(req: Request, member: str = "ann"):
+    b = await req.json()
+    return _g(grocery.invite, member, b.get("name", ""), b.get("email", ""))
+
+
+@app.post("/api/g/join")
+async def g_join(req: Request):
+    b = await req.json()
+    r = _g(grocery.join, b.get("code", ""))
+    mcp_base = os.environ.get("PUBLIC_MCP_URL", "")
+    r["mcp_url"] = f"{mcp_base.rstrip('/')}/mcp?token={r['mcp_token']}" if mcp_base else None
+    return r
+
+
+@app.get("/api/g/profile")
+def g_profile_get(member: str = "ann"):
+    return _g(grocery.get_profile, member)
+
+
+@app.post("/api/g/profile")
+async def g_profile_set(req: Request, member: str = "ann"):
+    b = await req.json()
+    return _g(grocery.set_profile, member, b.get("allergies"), b.get("diet"), b.get("always_get"),
+              b.get("share_with_group", True))
+
+
+@app.get("/api/g/chat")
+def g_chat_history(member: str = "ann"):
+    from . import gchat
+    return _g(gchat.history, member)
+
+
+@app.post("/api/g/chat")
+async def g_chat(req: Request, member: str = "ann"):
+    from . import gchat
+    b = await req.json()
+    return await asyncio.to_thread(_g, gchat.handle, member, b.get("text", ""))
+
+
+@app.post("/api/g/lastcall")
+async def g_lastcall(req: Request, member: str = "ann"):
+    b = await req.json() if (await req.body()) else {}
+    return _g(grocery.start_last_call, member, b.get("minutes", 2))
+
+
+@app.post("/api/g/done")
+def g_done(member: str = "ann"):
+    return _g(grocery.mark_done, member)
+
+
+@app.on_event("startup")
+async def cutoff_loop():
+    async def loop():
+        while True:
+            try:
+                await asyncio.to_thread(grocery.check_cutoff)
+            except Exception as e:
+                print("cutoff check failed:", type(e).__name__, str(e)[:120])
+            await asyncio.sleep(4)
+    asyncio.create_task(loop())
 
 
 # ---- Demo Market (Poppy) ----

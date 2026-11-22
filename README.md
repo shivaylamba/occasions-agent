@@ -11,6 +11,20 @@ Built at the Personal Agents Hackathon (San Francisco, 2026-11-20).
 - **Web app:** `/group` (Pantry). The original family-occasions agent is at `/`.
 - **Demo video:** `pantry-demo.mp4` (submitted separately)
 
+## Household flow (Ann's demo script)
+
+The group run follows a full household journey:
+
+1. **Make the household.** The coordinator names it, sets the schedule, delivery window and who pays, and invites people by email. Each invite has a single-use join link, and joining issues that person's own MCP link for their agent.
+2. **Profile chips.** Allergies, diets and "always get me" items become hard rules. They can be shared with the household while staying private in detail.
+3. **Talk to Pantry**, by chat or voice. The agent asks one question at a time, only when something is missing: "Unsweetened oat milk, like always. Any brand?", "When do you need it?" (asked once per run), "Non-fat or whole milk?". Replies that used a profile rule carry a *From your preferences* tag.
+4. **Shared list** with Everyone and Mine views.
+5. **Last call.** The coordinator brings the cutoff forward, and everyone is told no reply is needed. At the cutoff the agent shops without waiting for anyone who stayed silent.
+6. **Basket.** The agent compares the same products at every store checked and picks the cheapest complete basket. It also reports whether splitting across stores would save money once fees are counted. Each person approves their own share ("N of 4 approved"), and nothing is ordered before the last approval.
+7. **Order.** Payments are held, then captured. Checkout at a store that isn't connected is reported as such, never as "confirmed".
+
+The demo catalog uses a dated price snapshot for five national products at Walmart, Target, Safeway and Whole Foods Market. Missing listings, unseen prices and unknown fees are labelled, never treated as zero. The default model is Kimi K3.1 Pro (`moonshotai/Kimi-K3.1-Pro`) on Nebius Token Factory.
+
 ## Screenshots
 
 | Home | List and preferences |

@@ -1,4 +1,4 @@
-"""Models: Nebius Token Factory (Nemotron) decides; Superlinked SIE embeddings rank relevance.
+"""Models: Kimi K3.1 Pro on Nebius Token Factory decides; Superlinked SIE embeddings rank relevance.
 
 The LLM sees listing titles and family facts, never raw listing text (that is untrusted and can
 carry injections). Without keys, a deterministic ranker runs so the demo never depends on the network.
@@ -15,7 +15,7 @@ INJECTION = re.compile(r"(ignore (all |your )?(previous |prior )?instructions|ai
                        r"assistant[s]?,? (must|should) buy|system prompt)", re.I)
 
 NEBIUS_URL = "https://api.tokenfactory.nebius.com/v1"
-LLM_MODEL = env("LLM_MODEL", "nvidia/Nemotron-3_5-Lightning")
+LLM_MODEL = env("LLM_MODEL", "moonshotai/Kimi-K3.1-Pro")
 SIE_MODEL = env("SIE_EMBED_MODEL", "BAAI/bge-m3")
 
 
